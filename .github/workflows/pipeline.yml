@@ -55,18 +55,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Find if job succeeded
+        if: ${{ success() && github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
         uses: rjstone/discord-webhook-notify@v1
-        if: |
-          ${{ success() && github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
         with:
           severity: info
           description: A new version of pokedex was deployed to https://fso-pokedex-6fv9.onrender.com/
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Find if job failed
+        if: ${{ failure() && github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
         uses: rjstone/discord-webhook-notify@v1
-        if: |
-          ${{ failure() && github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
         with:
           severity: error
           details: Job failed!
