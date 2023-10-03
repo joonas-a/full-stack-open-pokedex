@@ -28,11 +28,11 @@ jobs:
           start: npm run start-prod
           wait-on: http://localhost:5000
 
-      - name: Find if '#skip' in commit message
+      - name: List commit messages
         env:
-          COMMIT_SKIP: ${{ contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
-          COMMIT_MESSAGE: ${{ toJson(github.event.commits.*.message) }}
+          COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
         run: echo "$COMMIT_MESSAGES"
+
       - name: Deploy to render
         if: ${{ github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
         run: curl ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
