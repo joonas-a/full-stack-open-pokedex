@@ -27,21 +27,15 @@ jobs:
           command: npm run test:e2e
           start: npm run start-prod
           wait-on: http://localhost:5000
-      - name: Get context
+
+      - name: Find if '#skip' in commit message
         env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      - name: commits
-        env:
-          COMMITS: ${{ toJson(github.event.commits) }}
-        run: echo "$COMMITS"
-      - name: commit messages
-        env:
-          COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
+          COMMIT_SKIP: ${{ contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
+          COMMIT_MESSAGE: ${{ toJson(github.event.commits.*.message) }}
         run: echo "$COMMIT_MESSAGES"
-      # - name: Deploy to render
-      #   if: ${{ github.event_name == 'push' }}
-      #   run: curl ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      - name: Deploy to render
+        if: ${{ github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
+        run: curl ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
 
   tag_release:
     needs: [simple_deployment_pipeline]
@@ -49,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Bump version and push tag
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message), ', '), '#skip') }}
         uses: anothrNick/github-tag-action@1.67.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
